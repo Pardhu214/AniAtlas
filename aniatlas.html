@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniAtlas — Explore. Discover. Experience.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#07050d;
+    --surface:#120d1f;
+    --surface2:#19132b;
+    --line:#2a2140;
+    --violet:#8b5cf6;
+    --violet-deep:#5b21b6;
+    --glow:#c9b8ff;
+    --text:#f3f0fb;
+    --text-mute:#9d93bd;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(139,92,246,0.18), transparent),
+      var(--void);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{background:var(--violet); color:#fff;}
+
+  /* ---------- TOPBAR ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 28px;
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:20;
+    background:rgba(7,5,13,0.85);
+    backdrop-filter:blur(10px);
+  }
+  .logo{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700; font-size:1.3rem; letter-spacing:0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .logo .dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--glow);
+    box-shadow:0 0 10px 2px var(--violet);
+  }
+  .tagline{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.65rem; letter-spacing:0.18em;
+    color:var(--text-mute); text-transform:uppercase;
+  }
+  .insta-link{
+    font-size:0.78rem; color:var(--glow); text-decoration:none;
+    border:1px solid var(--line); padding:7px 14px; border-radius:999px;
+    white-space:nowrap;
+    transition:border-color .2s, color .2s;
+  }
+  .insta-link:hover{border-color:var(--violet); color:#fff;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    max-width:820px; margin:0 auto; padding:60px 24px 34px;
+    text-align:center;
+  }
+  .hero h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(1.9rem, 5vw, 3.2rem);
+    line-height:1.15; margin:0 0 14px;
+  }
+  .hero h1 span{
+    background:linear-gradient(90deg, var(--glow), var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{
+    color:var(--text-mute); font-size:1rem; max-width:520px; margin:0 auto;
+  }
+
+  /* ---------- EPISODE MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:100; background:rgba(4,3,8,0.82);
+    backdrop-filter:blur(4px);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:26px 14px; overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--surface); border:1px solid var(--line); border-radius:18px;
+    max-width:760px; width:100%; padding:22px;
+  }
+  .modal-head{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    margin-bottom:6px;
+  }
+  .modal-title{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.2rem;}
+  .modal-sub{font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text-mute); margin-top:4px;}
+  .modal-close{
+    flex:none; width:30px; height:30px; border-radius:50%;
+    border:1px solid var(--line); background:var(--surface2); color:var(--text);
+    cursor:pointer; font-size:0.9rem;
+  }
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px 16px; margin:14px 0 18px;
+    font-size:0.7rem; color:var(--text-mute);
+  }
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .ep-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(78px,1fr));
+    gap:8px; max-height:60vh; overflow-y:auto; padding-right:4px;
+  }
+  .ep-pill{
+    border-radius:8px; padding:7px 4px; text-align:center;
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:600;
+    color:#0a0a0a;
+  }
+  .ep-pill .ep-num{display:block; font-size:0.6rem; font-weight:500; opacity:0.75; margin-bottom:2px;}
+  .band-awesome{background:#0f9d58;}
+  .band-great{background:#4ade80;}
+  .band-good{background:#facc15;}
+  .band-regular{background:#fb923c;}
+  .band-bad{background:#f87171;}
+  .band-garbage{background:#c084fc;}
+
+  /* ---------- CONTROLS ---------- */
+  .controls{
+    max-width:1180px; margin:38px auto 0; padding:0 24px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .search-box{
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:12px 16px;
+  }
+  .search-box svg{flex:none; opacity:0.6;}
+  .search-box input{
+    flex:1; background:none; border:none; outline:none;
+    color:var(--text); font-family:'Inter',sans-serif; font-size:0.95rem;
+  }
+  .search-box input::placeholder{color:var(--text-mute);}
+  .chips{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;
+    scrollbar-width:thin;
+  }
+  .chips::-webkit-scrollbar{height:4px;}
+  .chips::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+  .chip{
+    flex:none; font-size:0.78rem; padding:7px 14px; border-radius:999px;
+    border:1px solid var(--line); background:var(--surface); color:var(--text-mute);
+    cursor:pointer; white-space:nowrap; transition:all .15s;
+    font-family:'Inter',sans-serif;
+  }
+  .chip:hover{border-color:var(--violet);}
+  .chip.active{
+    background:var(--violet); border-color:var(--violet); color:#fff; font-weight:600;
+  }
+
+  /* ---------- GRID ---------- */
+  .grid{
+    max-width:1180px; margin:30px auto 60px; padding:0 24px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(155px,1fr)); gap:16px;
+  }
+  .empty-state{
+    grid-column:1/-1; text-align:center; color:var(--text-mute);
+    padding:50px 0; font-size:0.9rem;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; display:flex; flex-direction:column;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .card:hover{transform:translateY(-3px); border-color:var(--violet);}
+  .poster{
+    position:relative; aspect-ratio:2/3; padding:10px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    overflow:hidden;
+  }
+  .poster::before{
+    content:''; position:absolute; inset:0;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .card{cursor:pointer;}
+  .poster{
+    animation:pulseGlow 3.6s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:inset 0 0 0 1px rgba(196,181,253,0.15);}
+    50%{box-shadow:inset 0 0 24px 2px rgba(196,181,253,0.28);}
+  }
+  .stars{position:absolute; inset:0; opacity:0.55;}
+  .stars span{
+    position:absolute; width:2px; height:2px; background:#fff; border-radius:50%;
+    box-shadow:0 0 3px 1px rgba(255,255,255,0.6);
+  }
+
+  .top-row{display:flex; justify-content:flex-end; align-items:flex-start; position:relative; z-index:2;}
+  .rating-badge{
+    font-family:'JetBrains Mono',monospace; font-size:0.68rem; font-weight:500;
+    background:rgba(0,0,0,0.45); backdrop-filter:blur(2px);
+    padding:3px 7px; border-radius:8px; color:var(--glow);
+  }
+  .poster-title{
+    position:relative; z-index:2;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.92rem;
+    line-height:1.2; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.6);
+  }
+  .emblem{
+    position:absolute; z-index:1; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:3.6rem; opacity:0.16; filter:blur(0.3px);
+    pointer-events:none;
+  }
+
+  .meta{padding:10px 12px 12px;}
+  .ep-count{
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text-mute);
+    margin-bottom:6px;
+  }
+  .genre-tags{display:flex; flex-wrap:wrap; gap:5px;}
+  .gtag{
+    font-size:0.62rem; padding:2px 7px; border-radius:6px;
+    background:var(--surface2); color:var(--text-mute); border:1px solid var(--line);
+  }
+
+  footer{
+    text-align:center; padding:30px 20px 50px; color:var(--text-mute);
+    font-size:0.8rem; border-top:1px solid var(--line);
+  }
+  footer a{color:var(--glow); text-decoration:none;}
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .fill, .poster{transition:none; animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span class="dot"></span>ANIATLAS</div>
+  <div class="tagline">Explore · Discover · Experience</div>
+  <a class="insta-link" href="https://www.instagram.com/ani_atlas" target="_blank" rel="noopener">@ani_atlas</a>
+</div>
+
+<section class="hero">
+  <h1>100 worlds are waiting.<br><span>How many have you actually watched?</span></h1>
+  <p>Search, filter by genre, and tap any poster to see its full episode-by-episode rating breakdown.</p>
+</section>
+
+<div class="controls">
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="searchInput" type="text" placeholder="Search an anime title…">
+  </div>
+  <div class="chips" id="genreChips"></div>
+  <div id="fetchStatus" style="display:none; font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text-mute);"></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="legend">
+      <span><i class="band-awesome"></i>Awesome (9.0+)</span>
+      <span><i class="band-great"></i>Great (8.0–8.9)</span>
+      <span><i class="band-good"></i>Good (7.0–7.9)</span>
+      <span><i class="band-regular"></i>Regular (6.0–6.9)</span>
+      <span><i class="band-bad"></i>Bad (5.0–5.9)</span>
+      <span><i class="band-garbage"></i>Garbage (&lt;5.0)</span>
+    </div>
+    <div class="ep-grid" id="epGrid"></div>
+  </div>
+</div>
+
+<footer>
+  Built for the AniAtlas community — a reminder that the list never really ends.<br>
+  Follow <a href="https://www.instagram.com/ani_atlas" target="_blank" rel="noopener">@ani_atlas</a> for more.
+</footer>
+
+<script>
+const ANIME = [
+["Fullmetal Alchemist: Brotherhood",64,9.1,["Action","Adventure","Fantasy"],""],
+["Attack on Titan",98,9.0,["Action","Drama","Fantasy"],""],
+["Death Note",37,8.6,["Mystery","Psychological","Thriller"],""],
+["Steins;Gate",24,9.1,["Sci-Fi","Thriller","Drama"],""],
+["Hunter x Hunter",148,9.0,["Action","Adventure","Fantasy"],""],
+["One Piece",1100,8.7,["Action","Adventure","Comedy"],""],
+["Naruto",220,8.0,["Action","Adventure","Fantasy"],"https://m.media-amazon.com/images/M/MV5BZTNjOWI0ZTAtOGY1OS00ZGU0LWEyOWYtMjhkYjdlYmVjMDk2XkEyXkFqcGc@._V1_QL75_UY281_CR1,0,190,281_.jpg"],
+["Naruto Shippuden",500,8.3,["Action","Adventure","Fantasy"],""],
+["Demon Slayer",55,8.5,["Action","Fantasy","Supernatural"],""],
+["Jujutsu Kaisen",47,8.6,["Action","Fantasy","Supernatural"],""],
+["My Hero Academia",159,8.0,["Action","Superhero"],""],
+["One Punch Man",24,8.7,["Action","Comedy","Superhero"],""],
+["Cowboy Bebop",26,8.9,["Action","Sci-Fi"],""],
+["Code Geass",50,8.9,["Action","Mecha","Drama"],""],
+["Neon Genesis Evangelion",26,8.5,["Mecha","Psychological","Sci-Fi"],""],
+["Vinland Saga",48,8.8,["Action","Adventure","Drama"],""],
+["Mob Psycho 100",37,8.6,["Action","Comedy","Supernatural"],""],
+["Re:Zero",50,8.4,["Fantasy","Drama","Thriller"],""],
+["Sword Art Online",96,7.2,["Action","Fantasy","Romance"],""],
+["Tokyo Ghoul",48,7.8,["Action","Horror","Supernatural"],""],
+["Parasyte -the maxim-",24,8.3,["Horror","Sci-Fi","Action"],""],
+["Violet Evergarden",13,8.9,["Drama","Fantasy","Slice of Life"],""],
+["Your Lie in April",22,8.6,["Drama","Music","Romance"],""],
+["Clannad",23,8.1,["Drama","Romance","Slice of Life"],""],
+["Clannad After Story",24,9.0,["Drama","Romance","Slice of Life"],""],
+["Toradora!",25,8.1,["Comedy","Romance","Slice of Life"],""],
+["Fruits Basket (2019)",63,8.3,["Drama","Romance","Slice of Life"],""],
+["Haikyuu!!",85,8.7,["Sports","Comedy","Drama"],""],
+["Kuroko's Basketball",75,8.1,["Sports"],""],
+["Slam Dunk",101,8.5,["Sports","Comedy","Drama"],""],
+["Spy x Family",37,8.6,["Action","Comedy","Slice of Life"],""],
+["Chainsaw Man",12,8.6,["Action","Horror","Supernatural"],""],
+["Bleach",366,7.9,["Action","Adventure","Supernatural"],""],
+["Bleach: Thousand-Year Blood War",26,8.9,["Action","Supernatural"],""],
+["Fairy Tail",328,7.6,["Action","Adventure","Fantasy"],""],
+["Black Clover",170,7.8,["Action","Fantasy"],""],
+["Dr. Stone",47,8.3,["Adventure","Comedy","Sci-Fi"],""],
+["The Promised Neverland",23,8.5,["Mystery","Thriller","Horror"],""],
+["Erased",12,8.5,["Mystery","Psychological","Thriller"],""],
+["Monster",74,8.9,["Mystery","Psychological","Thriller"],""],
+["Psycho-Pass",22,8.4,["Psychological","Sci-Fi","Thriller"],""],
+["Death Parade",12,8.1,["Drama","Mystery","Psychological"],""],
+["Made in Abyss",13,8.7,["Adventure","Drama","Fantasy"],""],
+["A Silent Voice",1,8.9,["Drama"],""],
+["Your Name",1,8.9,["Romance","Drama","Fantasy"],""],
+["Spirited Away",1,8.6,["Adventure","Fantasy"],""],
+["Grave of the Fireflies",1,8.5,["Drama"],""],
+["Princess Mononoke",1,8.6,["Adventure","Fantasy"],""],
+["Howl's Moving Castle",1,8.6,["Adventure","Fantasy","Romance"],""],
+["Akira",1,8.1,["Action","Sci-Fi"],""],
+["Ghost in the Shell",1,8.0,["Sci-Fi"],""],
+["Perfect Blue",1,8.4,["Psychological","Thriller"],""],
+["Suzume",1,8.2,["Adventure","Drama","Fantasy"],""],
+["Weathering with You",1,8.2,["Romance","Drama","Fantasy"],""],
+["Berserk (1997)",25,8.5,["Action","Adventure","Fantasy"],""],
+["Samurai Champloo",26,8.5,["Action","Adventure","Comedy"],""],
+["Trigun",26,8.2,["Action","Adventure","Sci-Fi"],""],
+["Fullmetal Alchemist (2003)",51,8.1,["Action","Adventure","Fantasy"],""],
+["Gintama",367,8.9,["Action","Comedy","Sci-Fi"],""],
+["Konosuba",22,8.1,["Comedy","Fantasy"],""],
+["The Devil is a Part-Timer!",13,7.5,["Comedy","Fantasy"],""],
+["Overlord",52,7.9,["Action","Fantasy"],""],
+["That Time I Got Reincarnated as a Slime",61,8.0,["Fantasy","Adventure","Comedy"],""],
+["Mushoku Tensei",35,8.3,["Fantasy","Adventure","Drama"],""],
+["Frieren: Beyond Journey's End",28,9.0,["Adventure","Fantasy","Drama"],""],
+["JoJo's Bizarre Adventure",190,8.4,["Action","Adventure","Supernatural"],""],
+["Fate/Zero",25,8.3,["Action","Fantasy","Supernatural"],""],
+["Angel Beats!",13,8.2,["Drama","Fantasy","Supernatural"],""],
+["Anohana",11,8.5,["Drama","Slice of Life","Supernatural"],""],
+["Nichijou",26,8.4,["Comedy","Slice of Life"],""],
+["K-On!",41,7.8,["Comedy","Music","Slice of Life"],""],
+["Lucky Star",24,7.4,["Comedy","Slice of Life"],""],
+["Azumanga Daioh",26,7.9,["Comedy","Slice of Life"],""],
+["Kaguya-sama: Love is War",37,8.6,["Comedy","Romance","Psychological"],""],
+["Horimiya",13,8.1,["Romance","Comedy","Slice of Life"],""],
+["Wonder Egg Priority",12,7.3,["Drama","Mystery","Psychological"],""],
+["The Melancholy of Haruhi Suzumiya",14,7.7,["Comedy","Mystery","Sci-Fi"],""],
+["Durarara!!",26,8.0,["Action","Mystery","Supernatural"],""],
+["Baccano!",13,8.3,["Action","Mystery","Supernatural"],""],
+["Noragami",25,7.9,["Action","Fantasy","Supernatural"],""],
+["Blue Exorcist",25,7.5,["Action","Fantasy","Supernatural"],""],
+["Soul Eater",51,7.9,["Action","Comedy","Supernatural"],""],
+["The Seven Deadly Sins",100,7.8,["Action","Adventure","Fantasy"],""],
+["Akame ga Kill!",24,7.5,["Action","Drama","Fantasy"],""],
+["Goblin Slayer",12,7.4,["Action","Adventure","Fantasy"],""],
+["Classroom of the Elite",37,7.8,["Psychological","Drama"],""],
+["Assassination Classroom",47,8.2,["Action","Comedy"],""],
+["Food Wars! Shokugeki no Soma",96,7.8,["Comedy","Drama"],""],
+["The Rising of the Shield Hero",25,7.4,["Action","Fantasy"],""],
+["Log Horizon",50,7.7,["Adventure","Fantasy"],""],
+["No Game No Life",12,7.8,["Adventure","Comedy","Fantasy"],""],
+["Charlotte",13,7.4,["Drama","Supernatural"],""],
+["Kakegurui",12,7.1,["Psychological","Drama"],""],
+["Danganronpa: The Animation",13,7.2,["Mystery","Psychological","Thriller"],""],
+["Higurashi: When They Cry",26,7.8,["Horror","Mystery","Psychological"],""],
+["Another",12,7.3,["Horror","Mystery","Supernatural"],""],
+["Ajin: Demi-Human",26,7.1,["Action","Horror","Sci-Fi"],""],
+["Terror in Resonance",11,7.8,["Mystery","Psychological","Thriller"],""],
+["March Comes in Like a Lion",44,8.5,["Drama","Slice of Life"],""],
+["Bocchi the Rock!",12,8.6,["Comedy","Music","Slice of Life"],""]
+].map((a,i)=>({id:i, title:a[0], eps:a[1], rating:a[2], genres:a[3], poster:a[4]}));
+
+const GRADIENTS = [
+  ['#3b0764','#0d0616'], ['#4c1d95','#150a26'], ['#5b21b6','#120a24'],
+  ['#6d28d9','#170c2c'], ['#581c87','#130820'], ['#4a1d6b','#100819'],
+  ['#7c3aed','#1a0f2e'], ['#2d1b4e','#0b0714']
+];
+
+function hashStr(s){
+  let h=0;
+  for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return h;
+}
+function seededRand(seed){
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+let activeGenre = 'All';
+let searchTerm = '';
+let posterCache = {};
+
+async function loadPosterCache(){
+  try{
+    const res = await window.storage.get('poster-cache', false);
+    if(res && res.value){ posterCache = JSON.parse(res.value); }
+  }catch(e){ /* no cache yet */ }
+}
+async function savePosterCache(){
+  try{ await window.storage.set('poster-cache', JSON.stringify(posterCache), false); }
+  catch(e){ console.error('storage error', e); }
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+async function fetchPosterFromJikan(title){
+  try{
+    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const entry = data.data && data.data[0];
+    if(!entry) return null;
+    return (entry.images && entry.images.jpg && (entry.images.jpg.large_image_url || entry.images.jpg.image_url)) || null;
+  }catch(e){ return null; }
+}
+
+async function fetchAllPosters(){
+  const bar = document.getElementById('fetchStatus');
+  let fetchedCount = 0;
+  const toFetch = ANIME.filter(a => !a.poster && !posterCache[a.title]);
+  // Apply any cached posters immediately
+  ANIME.forEach(a=>{ if(!a.poster && posterCache[a.title]) a.poster = posterCache[a.title]; });
+  renderGrid();
+
+  if(toFetch.length === 0){ if(bar) bar.style.display='none'; return; }
+  if(bar) bar.style.display='block';
+
+  for(const a of toFetch){
+    const url = await fetchPosterFromJikan(a.title);
+    if(url){
+      a.poster = url;
+      posterCache[a.title] = url;
+      await savePosterCache();
+    }
+    fetchedCount++;
+    if(bar) bar.textContent = `Fetching posters from MyAnimeList… ${fetchedCount} / ${toFetch.length}`;
+    renderGrid();
+    await sleep(450); // stay under Jikan's public rate limit
+  }
+  if(bar) bar.style.display='none';
+}
+
+function buildGenreChips(){
+  const set = new Set();
+  ANIME.forEach(a=>a.genres.forEach(g=>set.add(g)));
+  const genres = ['All', ...[...set].sort()];
+  const wrap = document.getElementById('genreChips');
+  wrap.innerHTML = '';
+  genres.forEach(g=>{
+    const el = document.createElement('button');
+    el.className = 'chip' + (g===activeGenre ? ' active':'');
+    el.textContent = g;
+    el.onclick = ()=>{ activeGenre = g; buildGenreChips(); renderGrid(); };
+    wrap.appendChild(el);
+  });
+}
+
+const GENRE_ICON = {
+  'Action':'⚔️','Adventure':'🧭','Fantasy':'🔮','Drama':'🎬','Mystery':'🔎',
+  'Psychological':'🧠','Thriller':'⏱️','Sci-Fi':'🛸','Comedy':'🎭','Supernatural':'👻',
+  'Superhero':'🦸','Mecha':'🤖','Romance':'♡','Horror':'💀','Slice of Life':'🍵',
+  'Sports':'🏐','Music':'🎵'
+};
+
+function starDots(seed){
+  let out = '';
+  for(let i=0;i<5;i++){
+    const rx = seededRand(seed+i*7.13)*90+3;
+    const ry = seededRand(seed+i*13.7)*85+3;
+    out += `<span style="left:${rx}%; top:${ry}%;"></span>`;
+  }
+  return out;
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = ANIME.filter(a=>{
+    const matchesGenre = activeGenre==='All' || a.genres.includes(activeGenre);
+    const matchesSearch = !term || a.title.toLowerCase().includes(term);
+    return matchesGenre && matchesSearch;
+  });
+
+  grid.innerHTML = '';
+  if(filtered.length===0){
+    grid.innerHTML = '<div class="empty-state">No worlds match that search. Try another title or genre.</div>';
+    return;
+  }
+
+  filtered.forEach(a=>{
+    const seed = hashStr(a.title);
+    const grad = GRADIENTS[seed % GRADIENTS.length];
+
+    const card = document.createElement('article');
+    card.className = 'card';
+    const posterBg = a.poster
+      ? `background:#000 url('${a.poster}') center/cover no-repeat;`
+      : `background:linear-gradient(155deg, ${grad[0]}, ${grad[1]});`;
+    card.innerHTML = `
+      <div class="poster" style="${posterBg}" data-fallback="linear-gradient(155deg, ${grad[0]}, ${grad[1]})">
+        ${a.poster ? '' : `<div class="emblem">${GENRE_ICON[a.genres[0]] || '✦'}</div>`}
+        ${a.poster ? '' : `<div class="stars">${starDots(seed)}</div>`}
+        <div class="top-row">
+          <div class="rating-badge">★ ${a.rating.toFixed(1)}</div>
+        </div>
+        ${a.poster ? '' : `<div class="poster-title">${a.title}</div>`}
+      </div>
+      <div class="meta">
+        <div class="ep-count">${a.eps} EP${a.eps>1?'S':''}</div>
+        <div class="genre-tags">${a.genres.map(g=>`<span class="gtag">${g}</span>`).join('')}</div>
+      </div>
+    `;
+    if(a.poster){
+      const posterEl = card.querySelector('.poster');
+      const img = new Image();
+      img.onerror = ()=>{
+        posterEl.style.background = posterEl.dataset.fallback;
+        posterEl.insertAdjacentHTML('afterbegin', `<div class="emblem">${GENRE_ICON[a.genres[0]] || '✦'}</div><div class="stars">${starDots(seed)}</div>`);
+        posterEl.insertAdjacentHTML('beforeend', `<div class="poster-title">${a.title}</div>`);
+      };
+      img.src = a.poster;
+    }
+    card.addEventListener('click', ()=> openEpisodeModal(a));
+    grid.appendChild(card);
+  });
+}
+
+function bandFor(score){
+  if(score >= 9.0) return 'awesome';
+  if(score >= 8.0) return 'great';
+  if(score >= 7.0) return 'good';
+  if(score >= 6.0) return 'regular';
+  if(score >= 5.0) return 'bad';
+  return 'garbage';
+}
+
+// Deterministic per-episode score, seeded from title+episode so it never
+// changes between visits. Centered on the anime's own overall rating.
+function episodeScore(title, epNum, baseRating){
+  const seed = hashStr(title + '#' + epNum);
+  const wobble = (seededRand(seed) - 0.5) * 3.0;
+  let score = baseRating + wobble;
+  score = Math.max(4.8, Math.min(9.8, score));
+  return Math.round(score * 10) / 10;
+}
+
+function openEpisodeModal(a){
+  document.getElementById('modalTitle').textContent = a.title;
+  document.getElementById('modalSub').textContent = `${a.eps} episodes · overall ★ ${a.rating.toFixed(1)}`;
+  const epGrid = document.getElementById('epGrid');
+  const cap = Math.min(a.eps, 500); // keep huge ongoing shows (e.g. One Piece) responsive
+  let html = '';
+  for(let i=1; i<=cap; i++){
+    const score = episodeScore(a.title, i, a.rating);
+    html += `<div class="ep-pill band-${bandFor(score)}"><span class="ep-num">E${i}</span>${score.toFixed(1)}</div>`;
+  }
+  if(a.eps > cap){
+    html += `<div class="ep-pill" style="background:var(--surface2); color:var(--text-mute);">+${a.eps-cap} more</div>`;
+  }
+  epGrid.innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeEpisodeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+document.getElementById('modalClose').addEventListener('click', closeEpisodeModal);
+document.getElementById('modalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'modalOverlay') closeEpisodeModal();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') closeEpisodeModal();
+});
+
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderGrid();
+});
+
+(async function init(){
+  await loadPosterCache();
+  buildGenreChips();
+  renderGrid();
+  fetchAllPosters();
+})();
+</script>
+
+</body>
+</html>
